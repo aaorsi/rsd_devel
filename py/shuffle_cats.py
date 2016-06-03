@@ -42,7 +42,9 @@ def get_shuffle():
 
   write_params = True
   splitsats    = False
-  
+ 
+  Shuffletype  = 'All'  # All, mhalo, radius
+
 
   for gt in Galtype:
     for _sz in sz:
@@ -92,52 +94,61 @@ def get_shuffle():
                       f.close()
                       k += ngal
 
-                    lmhalo = np.log10(mhalo) + 10.0
+                    if Shuffletype == 'mhalo': 
+                      lmhalo = np.log10(mhalo) + 10.0
 
-                    nzz   = np.where(mhalo > 0)
-                    mhmin = lmhalo[nzz].min()
-                    mhmax = lmhalo[nzz].max()
-                    nmass = 10
-                    mharr = np.linspace(mhmin,mhmax,num=nmass)
-                    mhbin = mharr[1] - mharr[0]
+                      nzz   = np.where(mhalo > 0)
+                      mhmin = lmhalo[nzz].min()
+                      mhmax = lmhalo[nzz].max()
+                      nmass = 10
+                      mharr = np.linspace(mhmin,mhmax,num=nmass)
+                      mhbin = mharr[1] - mharr[0]
 
-#                    outf = "%s%s_sz_%s_q0%s_g0%s_ndens%s.sigma_M" % (datadir,gt,_sz,_q0,_g0,nd)
-#                    fout = file(outf,"w")
-#                    fout.write("#log(M_halo)\tsigma_v\tp10\tp90\n")
-                    
-                    zspace = np.zeros(k)
-                    xypos = np.zeros([k,2])
-                    igg = 0
-                    for imh in range(nmass):
-                      cc = np.where((lmhalo > mharr[imh]-mhbin/2.) & 
-                      (lmhalo <= mharr[imh] + mhbin/2.) & (mhalo > 0.0) & (dvh != 0.0))
-                       
-                      cccen = np.where((lmhalo > mharr[imh]-mhbin/2.) & 
-                      (lmhalo <= mharr[imh] + mhbin/2.) & (mhalo > 0.0) & (dvh == 0.0))
+  #                    outf = "%s%s_sz_%s_q0%s_g0%s_ndens%s.sigma_M" % (datadir,gt,_sz,_q0,_g0,nd)
+  #                    fout = file(outf,"w")
+  #                    fout.write("#log(M_halo)\tsigma_v\tp10\tp90\n")
                       
-                      ncc = len(cc[0])
-                      ncccen = len(cccen[0])
-                      
-                      if ncc > 0:
-                        shuf = np.random.permutation(cc[0])
-                        print 'introducing shuffled velocities' 
-                        for ii in range(ncc):
-                          ccid = cc[0][ii]
-                          zspace[igg] = pos[ccid,2] - dvh[shuf[ii]]/(aexp * cosmo.H(redshift).value/cosmo.h)
-                          xypos[igg,:] = pos[ccid,0:2]
-                          if zspace[igg] < 0:
-                            zspace[igg] += 3000.0
-                          elif zspace[igg] > 3000.0:
-                            zspace[igg] -= 3000.0
-                          igg += 1
-                      
-                      if ncccen >0:
-                        for ii in range(ncccen):
-                          ccid = cccen[0][ii]
-                          zspace[igg] = pos[ccid,2]
-                          xypos[igg,:] = pos[ccid,0:2]
-                          igg += 1
+                      zspace = np.zeros(k)
+                      xypos = np.zeros([k,2])
+                      igg = 0
+                      for imh in range(nmass):
+                        cc = np.where((lmhalo > mharr[imh]-mhbin/2.) & 
+                        (lmhalo <= mharr[imh] + mhbin/2.) & (mhalo > 0.0) & (dvh != 0.0))
+                         
+                        cccen = np.where((lmhalo > mharr[imh]-mhbin/2.) & 
+                        (lmhalo <= mharr[imh] + mhbin/2.) & (mhalo > 0.0) & (dvh == 0.0))
+                        
+                        ncc = len(cc[0])
+                        ncccen = len(cccen[0])
+                        
+                        if ncc > 0:
+                          shuf = np.random.permutation(cc[0])
+                          print 'introducing shuffled velocities' 
+                          for ii in range(ncc):
+                            ccid = cc[0][ii]
+                            zspace[igg] = pos[ccid,2] - dvh[shuf[ii]]/(aexp * cosmo.H(redshift).value/cosmo.h)
+                            xypos[igg,:] = pos[ccid,0:2]
+                            if zspace[igg] < 0:
+                              zspace[igg] += 3000.0
+                            elif zspace[igg] > 3000.0:
+                              zspace[igg] -= 3000.0
+                            igg += 1
+                        
+                        if ncccen >0:
+                          for ii in range(ncccen):
+                            ccid = cccen[0][ii]
+                            zspace[igg] = pos[ccid,2]
+                            xypos[igg,:] = pos[ccid,0:2]
+                            igg += 1
 
+                    elif Shuffletype == 'All':
+                      cc = np.where(dvh != 0.0)[0] if splitsats else np.arange(k)
+                      shuf = np.random.permutation(cc)
+                      
+                      if splitsats:
+                        
+
+                        
 
                     igg = 0
                     nperfile = round(k / (nfiles+0.0))
