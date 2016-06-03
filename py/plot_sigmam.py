@@ -1,3 +1,4 @@
+from os.path import expanduser
 import numpy as np
 
 import matplotlib
@@ -11,7 +12,17 @@ from scipy.optimize import curve_fit
 
 plottype = 'vhalo'  # vhalo or sigma
 
-datadir = '/home/CEFCA/aaorsi/data/GalCat/MXXL_extended/'
+home = expanduser("~")
+
+
+
+#datadir = '/home/CEFCA/aaorsi/data/GalCat/MXXL_extended/'
+
+if home == '/Users/aaorsi': #That means laptop copy
+  datadir = '/Users/aaorsi/work/rsd_devel/data/cat/'
+else:
+  datadir = '/home/CEFCA/aaorsi/data/GalCat/MXXL_extended/'
+
 Galtype = ['Starforming','Mstellar']#,'Halpha','OII_3727']
 ngtype = len(Galtype)
 sz = ['0.0']

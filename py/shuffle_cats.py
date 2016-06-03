@@ -1,3 +1,4 @@
+from os.path import expanduser
 from struct import *
 from scipy.optimize import curve_fit
 import numpy as np
@@ -16,6 +17,7 @@ redshift = 1.0
 
 aexp = 1./(1. + redshift)
 
+home = expanduser("~")
 
 def gaussf(x, mu,sigma):
   return 1./(np.sqrt(2*np.pi)*sigma)* np.exp(-(x-mu)**2/(2.*sigma**2))
@@ -28,10 +30,14 @@ def get_shuffle():
   Gaussian.
   """
 
-  datadir = '/home/CEFCA/aaorsi/data/GalCat/MXXL_extended/'
+  if home == '/Users/aaorsi': #That means laptop copy
+    datadir = '/Users/aaorsi/work/rsd_devel/data/cat/'
+  else:
+    datadir = '/home/CEFCA/aaorsi/data/GalCat/MXXL_extended/'
+
   Galtype = ['Starforming','Mstellar']#,'Halpha','OII_3727']
   sz = ['0.0']
-  ndens = ['1e-3']
+  ndens = ['1e-4']
   zspaceall = [1]#,0]
   zspace_type = ['halo']
   q0 = ['2.8e7']
@@ -60,7 +66,7 @@ def get_shuffle():
                     sats = '_sats' if splitsats else ''
                     vroot = "%sgaldata_sz_%s_zspace_type%s_q0%s_g0%ssfog%s_ndens%s" % (gt,
                     _sz,ztype,_q0,_g0,s2,nd)
-                    outfileroot  = "%s_shufflevMhalo%s" % (vroot,sats)
+                    outfileroot  = "%s_shufflevMhalo%s_%s" % (vroot,sats,Shuffletype)
                     outf = "%s%s" % (datadir, outfileroot)
 
                     read.write_paramfile(numfiles = nfiles,
@@ -142,15 +148,35 @@ def get_shuffle():
                             igg += 1
 
                     elif Shuffletype == 'All':
+                      igg = 0
                       cc = np.where(dvh != 0.0)[0] if splitsats else np.arange(k)
                       shuf = np.random.permutation(cc)
-                      
+                      ncc = len(cc[0])
                       if splitsats:
-                        
+                        cen = np.where(dvh == 0.0)
+                        ncen = len(cen[0])
+                        if ncen > 0:
+                          for ii in range(ncen):
+                            ccid = cen[0][ii]
+                            zspace[igg] = pos[ccid,2]
+                            xypos[igg,:] = pos[ccid,0:2]
+                            igg += 1
 
-                        
+                      else:
+                        if ncc > 0:
+                          for ii in range(ncc):
+                            ccid = cc[0][ii]
+                            zspace[igg] = pos[ccid,2] - dvh[shuf[ii]]/(aexp * 
+                            cosmo.H(redshift).value/cosmo.h)
+                            xypos[igg,:] = pos[ccid,0:2]
 
-                    igg = 0
+                            if zspace[igg] < 0:
+                              zspace[igg] += 3000.0
+                            elif zspace[igg] > 3000.0:
+                              zspace[igg] -= 3000.0
+                            igg += 1
+
+
                     nperfile = round(k / (nfiles+0.0))
                     for i in range(nfiles):
                       file_i = "%s.%d" % (outf, i)
