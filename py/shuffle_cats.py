@@ -47,9 +47,9 @@ def get_shuffle():
   outdir = datadir
 
   write_params = True
+  
   splitsats    = False
- 
-  Shuffletype  = 'All'  # All, mhalo, radius
+  Shuffletype  = 'mhalo'  # All, mhalo, radius
 
 
   for gt in Galtype:
@@ -66,7 +66,7 @@ def get_shuffle():
                     sats = '_sats' if splitsats else ''
                     vroot = "%sgaldata_sz_%s_zspace_type%s_q0%s_g0%ssfog%s_ndens%s" % (gt,
                     _sz,ztype,_q0,_g0,s2,nd)
-                    outfileroot  = "%s_shufflevMhalo%s_%s" % (vroot,sats,Shuffletype)
+                    outfileroot  = "%s_shufflev%s_%s" % (vroot,sats,Shuffletype)
                     outf = "%s%s" % (datadir, outfileroot)
 
                     read.write_paramfile(numfiles = nfiles,
@@ -78,6 +78,7 @@ def get_shuffle():
                     vz = np.zeros(ngmax)
                     dvh = np.zeros(ngmax)
                     mhalo = np.zeros(ngmax)
+                    rdist = np.zeros(ngmax)
 
                     k = 0
                     filepos = "%s%s" % (datadir,vroot)
@@ -96,9 +97,14 @@ def get_shuffle():
                         dvh[k+ _v] = (unpack('f',f.read(4)))[0]
                       for _v in range(ngal):
                         mhalo[k+ _v] = (unpack('f',f.read(4)))[0]
+                      for _v in range(ngal):
+                        rdist[k+ _v] = (unpack('f',f.read(4)))[0]
                       
                       f.close()
                       k += ngal
+
+                    zspace = np.zeros(k)
+                    xypos = np.zeros([k,2])
 
                     if Shuffletype == 'mhalo': 
                       lmhalo = np.log10(mhalo) + 10.0
@@ -114,8 +120,6 @@ def get_shuffle():
   #                    fout = file(outf,"w")
   #                    fout.write("#log(M_halo)\tsigma_v\tp10\tp90\n")
                       
-                      zspace = np.zeros(k)
-                      xypos = np.zeros([k,2])
                       igg = 0
                       for imh in range(nmass):
                         cc = np.where((lmhalo > mharr[imh]-mhbin/2.) & 
@@ -151,9 +155,9 @@ def get_shuffle():
                       igg = 0
                       cc = np.where(dvh != 0.0)[0] if splitsats else np.arange(k)
                       shuf = np.random.permutation(cc)
-                      ncc = len(cc[0])
+                      ncc = len(cc)
                       if splitsats:
-                        cen = np.where(dvh == 0.0)
+                        cen = np.where((dvh == 0.0) & (mhalo > 0))
                         ncen = len(cen[0])
                         if ncen > 0:
                           for ii in range(ncen):
@@ -165,7 +169,7 @@ def get_shuffle():
                       else:
                         if ncc > 0:
                           for ii in range(ncc):
-                            ccid = cc[0][ii]
+                            ccid = cc[ii]
                             zspace[igg] = pos[ccid,2] - dvh[shuf[ii]]/(aexp * 
                             cosmo.H(redshift).value/cosmo.h)
                             xypos[igg,:] = pos[ccid,0:2]
@@ -175,6 +179,8 @@ def get_shuffle():
                             elif zspace[igg] > 3000.0:
                               zspace[igg] -= 3000.0
                             igg += 1
+
+                      
 
 
                     nperfile = round(k / (nfiles+0.0))

@@ -45,6 +45,7 @@ def get_vhist():
                     vz = np.zeros(ngmax)
                     dvh = np.zeros(ngmax)
                     mhalo = np.zeros(ngmax)
+                    rdist = np.zeros(ngmax)
 
                     filepos = "%s%s" % (datadir,vroot)
                     pos = read.readgadget_pos(filepos)
@@ -63,6 +64,8 @@ def get_vhist():
                         dvh[k+ _v] = (unpack('f',f.read(4)))[0]
                       for _v in range(ngal):
                         mhalo[k+ _v] = (unpack('f',f.read(4)))[0]
+                      for _v in range(ngal):
+                        rdist[k+ _v] = (unpack('f',f.read(4)))[0]
                       
                       f.close()
                       k += ngal

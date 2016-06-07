@@ -24,7 +24,7 @@ ell = 1   # Quadrupole ell = 1
 func = model.vel_gauss
 sfunc = 'gauss'
 
-sminarr = [30,20,10,1]
+sminarr = [30,10]
 nsmin = len(sminarr)
 
 ndensarr = ['1e-3']
@@ -126,12 +126,12 @@ for igt in range(ntype):
   
   for ism in range(nsmin):
     
-    cc = np.where(xidata_halo['s'] > sminarr[ism])
+    cc = np.where((xidata_halo['s'] > sminarr[ism]) & (xidata_halo['s'] < 90.0))
     xdata = xidata_halo['s'][cc[0]]
  
     print 'running curve_fit with smin = %d...' % (sminarr[ism])
 
-    coeff, err = curve_fit(fitmodel,cc[0],xidata_halo['xileg'][1,cc[0]],p0=30.0,
+    coeff, err = curve_fit(fitmodel,cc[0],xidata_halo['xileg'][1,cc[0]],p0=0.0,
     sigma=diag[cc[0]],bounds=(0.,100.),method='dogbox')
      
      #
@@ -144,7 +144,7 @@ for igt in range(ntype):
     #ax1.text(0.6,0.9,r'$\sigma_v = %.1f {\rm km/s}$' % (coeff),transform=ax1.transAxes) 
     ax2.plot(xdata,np.abs((xileg_disp - xileg[1,cc[0]])/diag[cc[0]]),linewidth=0.25,color=fitcol[ism]) 
 
-  ax2.set_ylim([-0.05,0.74])
+  ax2.set_ylim([-0.05,2.9])
   ax1.set_ylim([-19,120])
  
   ax1.set_xlim([0,150])

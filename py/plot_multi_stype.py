@@ -1,7 +1,8 @@
 # Plot real space correlation function and bias as a function of scale
 
-
+import os.path
 import sys
+from struct import *
 sys.path.append('/home/CEFCA/aaorsi/')
 import matplotlib
 matplotlib.use('Agg')
@@ -21,19 +22,20 @@ pl.rc('font', family='STIXGeneral')
 
 showlog = False   # Add log-scale for small scales
 
-ndensarr = ['1e-3']
-nstrings = [r'1\times 10^{-3}']#,r'10^{-4}']
+ndensarr = ['1e-4']
+nstrings = [r'1\times 10^{-4}']#,r'10^{-4}']
 ndens = len(ndensarr)
 galtypearr = ['Starforming','Mstellar']
 #galtypearr = ['Mstellar']
 ntype = len(galtypearr)
 #zspace_type = ['None', 'halo','halo_disp','halo_shuffle','halo_shuffle_sat','halo_disp_sat','halo_stddev']
 #zspace_type = ['None', 'halo','halo_shuffle'],'halo_disp','halo_stddev']#,#'halo_shuffle_sat','halo_disp_sat','halo_stddev']
-zspace_type = ['None', 'halo','halo_shuffle','halo_sigmamsat']#,'halo_stddev']#,#'halo_shuffle_sat','halo_disp_sat','halo_stddev']
+zspace_type = ['None', 'halo','All','sats_All','mhalo','sats_mhalo']#,'halo_stddev']#,#'halo_shuffle_sat','halo_disp_sat','halo_stddev']
 nztype = len(zspace_type)
 
 #datadir_sfr = '/home/CEFCA/aaorsi/cosmocodes/data/datatest/'
 datadir = '/home/CEFCA/aaorsi/data/'
+catdir = '/home/CEFCA/aaorsi/data/GalCat/MXXL_extended/'
 mcmap = pl.get_cmap('bone')
 scmap = pl.get_cmap('cool')
 
@@ -73,9 +75,9 @@ blim  = [1,3.9]
 xlog = [1e-1,4.99]
 dlim = [-24.9,24.9]
 
-sfcol = plt.cm.Paired(np.linspace(0.3, 1, 5))
-mscol = plt.cm.Paired(np.linspace(0.0, .75, 5))
-o2col = plt.cm.Greens(np.linspace(0.3,1,4))
+sfcol = plt.cm.Paired(np.linspace(0.3, 1, 7))
+mscol = plt.cm.Paired(np.linspace(0.0, .75, 7))
+o2col = plt.cm.Greens(np.linspace(0.3,1,7))
 
 #gs.update(wspace=0,hspace=0,top=0.5)
 
@@ -112,16 +114,55 @@ for igt in range(ntype):
       else:
         fname_zspace = gtype+'galdata_sz_'+sz+'_zspace_type'+zt+'_q02.8e7_g0-1.3sfog20.0_ndens'+ndensarr[nd]+'_bin0_rspacedm_'
 
+      if zt is not 'None' and zt is not 'halo':
+        fname_zspace = gtype+'galdata_sz_'+sz+'_zspace_typehalo_q02.8e7_g0-1.3sfog20.0_ndens'+ndensarr[nd]+'_shufflev_'+zt+'_bin0_rspacedm_'
+        
       if zt is None and gtype == 'OII_3727':
         fname_zspace = gtype+'galdata_sz_'+sz+'_zspace_typeNone_q02.8e7_g0-1.3sfog20.0_ndens'+ndensarr[nd]+'_bin0_rspacedm_'
-      
+     
       if zt is 'halo_sigmam':
         fname_zspace = gtype+'galdata_sz_'+sz+'_zspace_typehalo_q02.8e7_g0-1.3sfog20.0_ndens'+ndensarr[nd]+'_shufflevMhalo_bin0_rspacedm_'
       if zt is 'halo_sigmamsat':
         fname_zspace = gtype+'galdata_sz_'+sz+'_zspace_typehalo_q02.8e7_g0-1.3sfog20.0_ndens'+ndensarr[nd]+'_shufflevMhalo_sats_bin0_rspacedm_'
 
+
+      vcat =  "%sgaldata_sz_%s_zspace_typehalo_q02.8e7_g0-1.3sfog20.0_ndens%s" % (gtype,sz,ndensarr[nd])
+      
+
+      
+
+
       if zt is 'None':
         label = r'$s(v_z)$' 
+        ngmax = 3e7 
+        vz = np.zeros(ngmax)
+        dvh = np.zeros(ngmax)
+        mhalo = np.zeros(ngmax)
+        k = 0
+        for i in range(20):
+          filev = "%s%s.%d.velocities" % (catdir,vcat, i)
+          
+          f = open(filev, 'rb')
+          ngal = (unpack('i',f.read(4)))[0]
+          #print 'Ngal %d' % (ngal)
+          
+          for _v in range(ngal):
+            vz[k + _v] = (unpack('f',f.read(4)))[0]
+          for _v in range(ngal):
+            dvh[k+ _v] = (unpack('f',f.read(4)))[0]
+          for _v in range(ngal):
+            mhalo[k+ _v] = (unpack('f',f.read(4)))[0]
+          
+          f.close()
+          k += ngal
+          
+        fsat = len(np.where(dvh != 0)[0])/(k + 0.0)
+        print 'satellite fraction: ',fsat
+
+      
+      
+      
+      
       elif zt is 'halo':
         label = r'$s(v_h)$'
       elif zt is 'halo_disp':
@@ -140,8 +181,13 @@ for igt in range(ntype):
         label = r'$s(v_h + \mathcal{P}(v,M_{halo}))$'
       elif zt is 'halo_sigmamsat':
         label = r'$s(v_h + \mathcal{P}(v,M_{halo})_{sats})$'
+      else:
+        label = zt
 
 
+      if not os.path.isfile(datadir+fname_zspace+'xi.512.0.tree_DD'):
+        print datadir + fname_zspace
+        continue
 
       rr = np.logspace(-3,2.5,num=200)
       
@@ -290,7 +336,9 @@ for igt in range(ntype):
       if ell == 0 and igt == 1 and izt == 0:
         #ax2.text(.7,.9,r'$n = '+nstrings[0]+'$',fontsize=10,transform=ax2.transAxes)
         ax4.text(.1,.9,r'$n = '+nstrings[0]+'$',fontsize=10,transform=ax4.transAxes)
-      
+        
+      if zt is 'None' and ell == 0:
+        ax4.text(.7,0.1,r'$f_{sat} = %.2f$' % (fsat),fontsize=10,transform=ax4.transAxes)
      
       #if ell == 0 and izt == 0:
       #  if showlog:
