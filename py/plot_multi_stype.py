@@ -30,7 +30,7 @@ galtypearr = ['Starforming','Mstellar']
 ntype = len(galtypearr)
 #zspace_type = ['None', 'halo','halo_disp','halo_shuffle','halo_shuffle_sat','halo_disp_sat','halo_stddev']
 #zspace_type = ['None', 'halo','halo_shuffle'],'halo_disp','halo_stddev']#,#'halo_shuffle_sat','halo_disp_sat','halo_stddev']
-zspace_type = ['None', 'halo','All','sats_All','mhalo','sats_mhalo']#,'halo_stddev']#,#'halo_shuffle_sat','halo_disp_sat','halo_stddev']
+zspace_type = ['None', 'halo','halo_rvir']#,'halo_stddev']#,#'halo_shuffle_sat','halo_disp_sat','halo_stddev']
 nztype = len(zspace_type)
 
 #datadir_sfr = '/home/CEFCA/aaorsi/cosmocodes/data/datatest/'
@@ -114,7 +114,7 @@ for igt in range(ntype):
       else:
         fname_zspace = gtype+'galdata_sz_'+sz+'_zspace_type'+zt+'_q02.8e7_g0-1.3sfog20.0_ndens'+ndensarr[nd]+'_bin0_rspacedm_'
 
-      if zt is not 'None' and zt is not 'halo':
+      if zt is not 'None' and zt is not 'halo' and zt is not 'halo_rvir':
         fname_zspace = gtype+'galdata_sz_'+sz+'_zspace_typehalo_q02.8e7_g0-1.3sfog20.0_ndens'+ndensarr[nd]+'_shufflev_'+zt+'_bin0_rspacedm_'
         
       if zt is None and gtype == 'OII_3727':

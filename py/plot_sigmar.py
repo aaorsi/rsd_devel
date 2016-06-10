@@ -37,13 +37,16 @@ ngmax = 3e7
 outdir = datadir
 
 pl.rc('font', family='STIXGeneral')
-gs = gsc.GridSpec(1,nnd)
-gs.update(left=0.1,wspace=0.0,hspace=0.0,top=0.5)
+gs = gsc.GridSpec(ngtype,nnd)
+gs.update(left=0.1,wspace=0.0,hspace=0.0,top=0.75)
 
 axarr = []
 
-for i in range(nnd):
-  axarr.append(pl.subplot(gs[i]))
+for j in range(ngtype):
+  for i in range(nnd):
+    axarr.append(pl.subplot(gs[j,i]))
+
+
 
 idens = 0
 
@@ -55,7 +58,7 @@ rarr = np.zeros(nrbins)
 
 svarr = np.zeros([nmass,nrbins])
 
-col = pl.cm.Paired(np.linspace(0.0,0.75,nmass))
+col = pl.cm.RdYlBu(np.linspace(0.15,0.85,nmass))
 
 for igt in range(ngtype):
   gt = Galtype[igt]
@@ -63,7 +66,8 @@ for igt in range(ngtype):
   for _sz in sz:
     for idens in range(nnd):
       nd = ndens[idens]
-      ax = axarr[idens]
+      axid = idens + nnd*igt
+      ax = axarr[axid]
       if idens == 0:
         ax.set_ylabel(r'$\log(\sigma_{\rm std})$',fontsize=15)
       else:
@@ -90,26 +94,17 @@ for igt in range(ngtype):
                   
 
                   for imm in range(nmass):
-                    ax.plot(rarr,svarr[imm,:],color=col[imm],
-                    linewidth=2,label=gt+'M=%.2f' % (marr[imm]))
-                    if igt == 0:
-                      mhc = np.where(data[:,0] > 13.0)[0]
-                      f = lambda x, *p: p[0] * x**(1./3)
-                      coef,pcov = curve_fit(f,10**data[mhc,0],data[mhc,1],[100.0])
-                      fx = f(10**data[:,0],coef)
-                      ax.plot(data[:,0],fx,'--',color='black')
-                    #ax.fill_between(data[:,0],np.log10(data[:,2]),np.log10(data[:,3]),color=col,alpha=0.25)
-                    ax.set_xlabel(r'$\log(M_{\rm halo})$',fontsize=15)
-                    ax.set_title('n = '+nd,fontsize=15)
-                    if idens == 0:
-                      ax.legend(loc='upper left')
+                    ax.plot(rarr,svarr[imm,:]/((10**(marr[imm]-10))**(1./3)),color=col[imm],
+                    linewidth=2,label='M=%.2f' % (marr[imm]))
                     
-                    ax.set_title('n = '+nd,fontsize=15)
+                    ax.set_xlabel(r'$(r[{\rm Mpc/}h])$',fontsize=15)
+                    if igt == 0:
+                      ax.set_title('n = '+nd,fontsize=15)
                     if idens == 0:
-                      ax.legend(loc='upper left')
-                      ax.set_ylabel(r'$\Delta V$',fontsize=15)
-
-
-
-pl.savefig('../plots/sigmarm.pdf')
+                      ax.legend(loc='upper left',title=gt,fontsize=7)
+                    
+                    ax.set_xlim([0,1.2])
+                    ax.set_ylim([0,200])
+pl.show()
+#pl.savefig('../plots/sigmarm.pdf')
 

@@ -24,7 +24,7 @@ Galtype = ['Starforming','Mstellar']#,'Halpha','OII_3727']
 sz = ['0.0']
 ndens = ['1e-4','5e-4','1e-3']
 zspace = [1]#,0]
-zspace_type = ['None']
+zspace_type = ['halo_rvir']
 q0 = ['2.8e7']
 g0 = ['-1.3']
 sfog = ['20.0']
@@ -74,10 +74,14 @@ for gt in Galtype:
                     k += ngal
 
                   lmhalo = np.log10(mhalo) + 10.0
+                  rvir_im = read.get_rvir(mhalo,1.0)
 
-                  mhmin = np.min(lmhalo[np.where(mhalo > 0)])
-                  mhmax = np.max(lmhalo)
-                  
+#                  mhmin = np.min(lmhalo[np.where(mhalo > 0)])
+#                  mhmax = np.max(lmhalo)
+
+                  mhmin = 12.5
+                  mhmax = 15.5
+
                   nmass = 5
                   mharr = np.linspace(mhmin,mhmax,num=nmass)
                   mhbin = mharr[1] - mharr[0]
@@ -86,23 +90,25 @@ for gt in Galtype:
                   fout = file(outf,"w")
                   fout.write("#log(M_halo)\tradius\tsigmav\tnhaloes\n")
                   
-                  rmin = -2
-                  rmax = 0.5
-                  nrbins = 10
+                  rmin = 0.
+                  rmax = 1.2
+                  nrbins = 10 
                   rarr = np.linspace(rmin,rmax,num=nrbins)
                   rbin = rarr[1] - rarr[0]
 
                   for imh in range(nmass):
                     
                     cc = np.where( (lmhalo > mharr[imh]-mhbin/2.) & 
-                    (lmhalo < mharr[imh] + mhbin/2.))
-                    
+                    (lmhalo < mharr[imh] + mhbin/2.) & (dvh != 0))
+                   
+
                     ncc = len(cc[0])
                     if len(cc[0]) == 0:
                       continue  
                     
                     for irr in range(nrbins):
-                      crad = np.where((np.log10(rdist[cc]) > rarr[irr] - rbin/2.) & (np.log10(rdist[cc]) < rarr[irr] + rbin/2.))
+                      crad = np.where((rdist[cc]/rvir_im[cc] > rarr[irr] - rbin/2.) & (
+                      rdist[cc]/rvir_im[cc] < rarr[irr] + rbin/2.))
                     
                       nrad = len(crad[0])
 
@@ -110,6 +116,9 @@ for gt in Galtype:
                         fout.write("%f %f %f %f\n" % (mharr[imh],rarr[irr],0.0,0.0))
                         continue
 
+                      sigma_m = np.std(dvh[cc[0][crad[0]]])
+                      nhtot = nrad
+                      """
                       nhtot = 0
                       sig_h = 0.0
                       halocc = lmhalo[crad]
@@ -121,6 +130,10 @@ for gt in Galtype:
                       sig_h = []
                       ngperh = 0
                       sigma_m = 0.0   
+                      
+
+
+
                       for imm in range(nrad):
                         if halocc[imm] == h_x:
                           v_halo.append(dvcc[imm])
@@ -136,6 +149,7 @@ for gt in Galtype:
                         medvhalo = np.mean(v_halo)
                         p10 = np.percentile(v_halo,10.0)
                         p90 = np.percentile(v_halo,90.0)
+                      """
 
                       fout.write("%f %f %f %d\n" % (mharr[imh],rarr[irr],sigma_m,nhtot))
 
