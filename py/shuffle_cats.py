@@ -38,7 +38,7 @@ def get_shuffle():
 
   Galtype = ['Starforming','Mstellar']#,'Halpha','OII_3727']
   sz = ['0.0']
-  ndens = ['1e-4']
+  ndens = ['1e-3']
   zspaceall = [1]#,0]
   zspace_type = ['halo_rvir']
   q0 = ['2.8e7']
@@ -131,14 +131,16 @@ def get_shuffle():
   #                    fout = file(outf,"w")
   #                    fout.write("#log(M_halo)\tsigma_v\tp10\tp90\n")
                      
+                      satc = ccsat if splitsats else 1
+                      rvirc = crvir if UseRVir else 1
+                      
                       igg = 0
+                      
                       for imh in range(nmass):
                         
                         cc = (lmhalo > mharr[imh]-mhbin/2.) & 
                         (lmhalo <= mharr[imh] + mhbin/2.) 
 
-                        satc = ccsat if splitsats else 1
-                        rvirc = crvir if UseRVir else 1
                         
                         allcond = np.where(czero & cc & satc & rvirc)
                         nall = len(allcond[0])
@@ -169,32 +171,32 @@ def get_shuffle():
                           
                     elif Shuffletype == 'All':
                       igg = 0
-                      cc = np.where(dvh != 0.0)[0] if splitsats else np.arange(k)
-                      shuf = np.random.permutation(cc)
-                      ncc = len(cc)
+                     
+                      cc = np.where(czero & satc & rvirc)
+                      shuf = np.random.permutation(cc[0])
+                      ncc = len(cc[0])
                       if splitsats:
-                        cen = np.where((dvh == 0.0) & (mhalo > 0))
-                        ncen = len(cen[0])
-                        if ncen > 0:
-                          for ii in range(ncen):
-                            ccid = cen[0][ii]
-                            zspace[igg] = pos[ccid,2]
-                            xypos[igg,:] = pos[ccid,0:2]
-                            igg += 1
+                          centcond = np.where(czero & ~satc & rvirc)
+                          ncent = len(centcond[0])
+                          if ncent > 0:
+                            for ii in range(ncent):
+                              ccid = centcond[0][ii]
+                              zspace[igg] = pos[ccid,2]
+                              xypos[igg,:] = pos[ccid,0:2]
+                              igg += 1
+                      
+                      if ncc > 0:
+                        for ii in range(ncc):
+                          ccid = cc[ii]
+                          zspace[igg] = pos[ccid,2] - dvh[shuf[ii]]/(aexp * 
+                          cosmo.H(redshift).value/cosmo.h)
+                          xypos[igg,:] = pos[ccid,0:2]
 
-                      else:
-                        if ncc > 0:
-                          for ii in range(ncc):
-                            ccid = cc[ii]
-                            zspace[igg] = pos[ccid,2] - dvh[shuf[ii]]/(aexp * 
-                            cosmo.H(redshift).value/cosmo.h)
-                            xypos[igg,:] = pos[ccid,0:2]
-
-                            if zspace[igg] < 0:
-                              zspace[igg] += 3000.0
-                            elif zspace[igg] > 3000.0:
-                              zspace[igg] -= 3000.0
-                            igg += 1
+                          if zspace[igg] < 0:
+                            zspace[igg] += 3000.0
+                          elif zspace[igg] > 3000.0:
+                            zspace[igg] -= 3000.0
+                          igg += 1
 
                     nperfile = round(k / (nfiles+0.0))
                     for i in range(nfiles):
